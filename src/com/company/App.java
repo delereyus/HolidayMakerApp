@@ -72,15 +72,17 @@ public class App {
 
         int numberOfPeople;
         String yesOrNo;
-        boolean pool;
-        boolean restaurant;
-        boolean entertainment;
-        boolean kidsClub;
         float distanceToBeach;
         float distanceToCenter;
         String startDate;
         String endDate;
         String[] datesForChecking;
+
+        String poolIsNecessary;
+        String restaurantIsNecessary;
+        String entertainmentIsNecessary;
+        String kidsClubIsNecessary;
+
 
         while (true) {
             System.out.println("Ange antal personer för bokningen eller 0 för att gå tillbaka:");
@@ -99,18 +101,22 @@ public class App {
 
         try {
             Statement statement = conn.createStatement();
-            ResultSet rs = statement.executeQuery("SELECT * EXCLUDE rum_id FROM datum WHERE rum_id = 1;");
+            ResultSet rs = statement.executeQuery("SELECT * FROM datum WHERE rum_id = 1;");
             ResultSetMetaData rsmd = rs.getMetaData();
 
-            datesForChecking = new String[rsmd.getColumnCount()];
+            datesForChecking = new String[rsmd.getColumnCount() - 1];
 
-            for (int i = 0; i <= datesForChecking.length; i++) {
-                datesForChecking[i] = rsmd.getCatalogName(i + 1);
+            for (int i = 0; i < datesForChecking.length; i++) {
+                datesForChecking[i] = rsmd.getColumnLabel(i + 2);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
             System.out.println("Ett fel har inträffat, du returneras till huvudmenyn.");
             return;
+        }
+
+        for (String date : datesForChecking){
+            System.out.println(date);
         }
 
         while (true) {
@@ -151,10 +157,10 @@ public class App {
             System.out.println("Ska boendet erbjuda swimmingpool? (y/n)");
             yesOrNo = scanner.nextLine().toLowerCase();
             if (yesOrNo.equals("y")) {
-                pool = true;
+                poolIsNecessary = " pool = 1 AND";
                 break;
             } else if (yesOrNo.equals("n")) {
-                pool = false;
+                poolIsNecessary = "";
                 break;
             }
         }
@@ -162,11 +168,12 @@ public class App {
         while (true) {
             System.out.println("Ska boendet erbjuda restaurang? (y/n)");
             yesOrNo = scanner.nextLine().toLowerCase();
+
             if (yesOrNo.equals("y")) {
-                restaurant = true;
+                restaurantIsNecessary = " restaurang = 1 AND";
                 break;
             } else if (yesOrNo.equals("n")) {
-                restaurant = false;
+                restaurantIsNecessary = "";
                 break;
             }
         }
@@ -174,11 +181,12 @@ public class App {
         while (true) {
             System.out.println("Ska boendet erbjuda kvällsunderhållning? (y/n)");
             yesOrNo = scanner.nextLine().toLowerCase();
+
             if (yesOrNo.equals("y")) {
-                entertainment = true;
+                entertainmentIsNecessary = " kvällsunderhållning = 1 AND";
                 break;
             } else if (yesOrNo.equals("n")) {
-                entertainment = false;
+                entertainmentIsNecessary = "";
                 break;
             }
         }
@@ -186,11 +194,13 @@ public class App {
         while (true) {
             System.out.println("Ska boendet erbjuda barnklubb? (y/n)");
             yesOrNo = scanner.nextLine().toLowerCase();
+
+
             if (yesOrNo.equals("y")) {
-                kidsClub = true;
+                kidsClubIsNecessary = " barnklubb = 1 AND";
                 break;
             } else if (yesOrNo.equals("n")) {
-                kidsClub = false;
+                kidsClubIsNecessary = "";
                 break;
             }
         }
@@ -211,7 +221,7 @@ public class App {
                 } while (true);
                 break;
             } else if (yesOrNo.equals("n")) {
-                distanceToBeach = 9999;
+                distanceToBeach = 999.0f;
                 break;
             } else System.out.println("\nVänligen ange 'y' eller 'n'!\n");
         }
@@ -232,22 +242,25 @@ public class App {
                 } while (true);
                 break;
             } else if (yesOrNo.equals("n")) {
-                distanceToCenter = 9999;
+                distanceToCenter = 999.0f;
                 break;
             } else System.out.println("\nVänligen ange 'y' eller 'n'!\n");
         }
 
-
-
         try {
             Statement statement = conn.createStatement();
-            ResultSet resultSet = statement.executeQuery("select * from rum;");
+            ResultSet resultSet = statement.executeQuery("SELECT namn, pool, restaurang, kvällsunderhållning, barnklubb, avstånd_strand, avstånd_centrum, omdöme " +
+                    "FROM boende WHERE" + poolIsNecessary + restaurantIsNecessary + entertainmentIsNecessary + kidsClubIsNecessary + " avstånd_strand < " + distanceToBeach + " AND avstånd_centrum < " + distanceToCenter +";");
 
             while (resultSet.next()) {
-                String row = "id: " + resultSet.getString("rum_id")
-                        + ", name: " + resultSet.getString("antal_sängar")
-                        + ", type: " + resultSet.getString("prisklass")
-                        + ", email: " + resultSet.getString("tillgänglighet");
+                String row = "Hotell: " + resultSet.getString("namn")
+                        + ", Pool: " + resultSet.getBoolean("pool")
+                        + ", Restaurang: " + resultSet.getBoolean("restaurang")
+                        + ", Kvällsunderhållning: " + resultSet.getBoolean("kvällsunderhållning")
+                        + ", Barnklubb: " + resultSet.getBoolean("barnklubb")
+                        + ", Avstånd till strand: " + resultSet.getFloat("avstånd_strand")
+                        + ", Avstånd till centrum: " + resultSet.getFloat("avstånd_centrum")
+                        + ", Omdöme: " + resultSet.getFloat("omdöme");
                 System.out.println(row);
             }
         } catch (Exception ex) {
