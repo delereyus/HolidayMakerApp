@@ -273,25 +273,55 @@ public class App {
             } else System.out.println("\nVänligen ange 'y' eller 'n'!\n");
         }
 
+        String dateString = "";
+
+        for (String date : selectedDates){
+            dateString += " r." + date + " = true AND";
+        }
+
+        int hotelNr = 1;
+
         try {
             Statement statement = conn.createStatement();
-            ResultSet resultSet = statement.executeQuery("SELECT namn, pool, restaurang, kvällsunderhållning, barnklubb, avstånd_strand, avstånd_centrum, omdöme " +
-                    "FROM boende WHERE" + poolIsNecessary + restaurantIsNecessary + entertainmentIsNecessary + kidsClubIsNecessary + " avstånd_strand < " + distanceToBeach + " AND avstånd_centrum < " + distanceToCenter +";");
+            ResultSet resultSet = statement.executeQuery("SELECT b.boende_id, b.namn, b.pool, b.restaurang, b.kvällsunderhållning, b.barnklubb, b.avstånd_strand, b.avstånd_centrum, b.omdöme " +
+                    "FROM boende b JOIN rum r ON b.boende_id = r.boende_id " +
+                    "WHERE" + dateString + poolIsNecessary + restaurantIsNecessary + entertainmentIsNecessary + kidsClubIsNecessary + " avstånd_strand < " + distanceToBeach + " AND avstånd_centrum < " + distanceToCenter +" AND r.antal_sängar = " + numberOfPeople +
+                    " GROUP BY b.namn;");
 
             while (resultSet.next()) {
-                String row = "Hotell: " + resultSet.getString("namn")
+                Statement anotherStatement = conn.createStatement();
+                ResultSet amountOfRooms = anotherStatement.executeQuery("SELECT COUNT(rum_id) FROM rum WHERE boende_id = " + resultSet.getInt("boende_id") + " AND antal_sängar = " + numberOfPeople + ";");
+                int rooms = 0;
+
+                while(amountOfRooms.next()){
+                    rooms = amountOfRooms.getInt(1);
+                }
+
+                String row = hotelNr + ". Boende: " + resultSet.getString("namn")
                         + ", Pool: " + resultSet.getBoolean("pool")
                         + ", Restaurang: " + resultSet.getBoolean("restaurang")
                         + ", Kvällsunderhållning: " + resultSet.getBoolean("kvällsunderhållning")
                         + ", Barnklubb: " + resultSet.getBoolean("barnklubb")
                         + ", Avstånd till strand: " + resultSet.getFloat("avstånd_strand")
                         + ", Avstånd till centrum: " + resultSet.getFloat("avstånd_centrum")
-                        + ", Omdöme: " + resultSet.getFloat("omdöme");
+                        + ", Omdöme: " + resultSet.getFloat("omdöme")
+                        + ", Lediga rum för " + numberOfPeople + " personer: " + rooms;
                 System.out.println(row);
+                hotelNr++;
             }
         } catch (Exception ex) {
             ex.printStackTrace();
             System.out.println("\nEtt fel inträffade!\n");
+        }
+
+        while (true) {
+            System.out.println("\nBoka ett boende genom att ange siffran till vänster om boendet (1-" + hotelNr + ") eller 0 för att avsluta sökningen");
+            String selection = scanner.nextLine();
+
+            switch (selection){
+                case 1:
+
+            }
         }
     }
 
