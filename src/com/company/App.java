@@ -64,7 +64,7 @@ public class App {
             System.out.println("\nKunden är nu registrerad!\n");
         }catch(Exception ex){
             ex.printStackTrace();
-            System.out.println("\nKunden lyckades inte läggas in i systemet!\n");
+            System.out.println("\nKunden lyckades inte registreras!\n");
         }
     }
 
@@ -76,13 +76,16 @@ public class App {
         float distanceToCenter;
         String startDate;
         String endDate;
-        String[] datesForChecking;
+        String[] allDates;
+        String[] datesAfterStartDate = new String[0];
+        ArrayList<String> selectedDates = new ArrayList<>();
 
         String poolIsNecessary;
         String restaurantIsNecessary;
         String entertainmentIsNecessary;
         String kidsClubIsNecessary;
 
+        // VÄLJA HOTELL SEDAN VÄLJA RUM, GÅ FRAM OCH TILLBAKA I MENYN, FIXA HUR BOKNINGAR PÅ DATUM/RUM SKA IMPLEMENTERAS
 
         while (true) {
             System.out.println("Ange antal personer för bokningen eller 0 för att gå tillbaka:");
@@ -101,13 +104,13 @@ public class App {
 
         try {
             Statement statement = conn.createStatement();
-            ResultSet rs = statement.executeQuery("SELECT * FROM datum WHERE rum_id = 1;");
+            ResultSet rs = statement.executeQuery("SELECT * FROM rum WHERE rum_id = 1;");
             ResultSetMetaData rsmd = rs.getMetaData();
 
-            datesForChecking = new String[rsmd.getColumnCount() - 1];
+            allDates = new String[rsmd.getColumnCount() - 4];
 
-            for (int i = 0; i < datesForChecking.length; i++) {
-                datesForChecking[i] = rsmd.getColumnLabel(i + 2);
+            for (int i = 0; i < allDates.length; i++) {
+                allDates[i] = rsmd.getColumnLabel(i + 5);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -115,33 +118,46 @@ public class App {
             return;
         }
 
-        for (String date : datesForChecking){
+        for (String date : allDates){
             System.out.println(date);
         }
 
+        int breakPoint;
+
+
         while (true) {
-            System.out.println("Ange startdatum för vistelsen: (ex. '23/6')");
+            System.out.println("Ange startdatum för vistelsen: (ex. '23_6')");
             startDate = scanner.nextLine();
             boolean correctDate = false;
 
-            for (String date : datesForChecking) {
-                if (date.equals(startDate)) {
+            for (int i = 0; i < allDates.length; i++) {
+                if (allDates[i].equals(startDate)) {
+                    if (startDate.equals("31_7")) {
+                        System.out.println("Det går inte att starta en vistelse på säsongens sista dag!");
+                        break;
+                    }
                     correctDate = true;
+                    breakPoint = i + 1;
+                    datesAfterStartDate = new String[allDates.length - breakPoint];
+                    for (int x = breakPoint, y = 0; x < allDates.length; x++, y++) {
+                        datesAfterStartDate[y] = allDates[x];
+                    }
                     break;
                 }
             }
 
             if (!correctDate) {
-                System.out.println("Vänligen ange ett datum enligt formatet '23/6'");
+                System.out.println("Vänligen ange ett datum enligt formatet '23_6'");
             } else break;
         }
 
+
         while (true) {
-            System.out.println("Ange slutdatum för vistelsen: (ex. '27/6')");
+            System.out.println("Ange slutdatum för vistelsen: (ex. '27_6')");
             endDate = scanner.nextLine();
             boolean correctDate = false;
 
-            for (String date : datesForChecking) {
+            for (String date : datesAfterStartDate) {
                 if (date.equals(endDate)) {
                     correctDate = true;
                     break;
@@ -149,12 +165,22 @@ public class App {
             }
 
             if (!correctDate) {
-                System.out.println("Vänligen ange ett datum enligt formatet '27/6'");
+                System.out.println("Vänligen ange ett datum enligt formatet '27_6'");
             } else break;
         }
 
+
+        selectedDates.add(startDate);
+
+        for (int i = 0; i < datesAfterStartDate.length; i++){
+            selectedDates.add(datesAfterStartDate[i]);
+            if (datesAfterStartDate[i].equals(endDate)){
+                break;
+            }
+        }
+
         while (true) {
-            System.out.println("Ska boendet erbjuda swimmingpool? (y/n)");
+            System.out.println("Måste boendet erbjuda swimmingpool? (y/n)");
             yesOrNo = scanner.nextLine().toLowerCase();
             if (yesOrNo.equals("y")) {
                 poolIsNecessary = " pool = 1 AND";
@@ -166,7 +192,7 @@ public class App {
         }
 
         while (true) {
-            System.out.println("Ska boendet erbjuda restaurang? (y/n)");
+            System.out.println("Måste boendet erbjuda restaurang? (y/n)");
             yesOrNo = scanner.nextLine().toLowerCase();
 
             if (yesOrNo.equals("y")) {
@@ -179,7 +205,7 @@ public class App {
         }
 
         while (true) {
-            System.out.println("Ska boendet erbjuda kvällsunderhållning? (y/n)");
+            System.out.println("Måste boendet erbjuda kvällsunderhållning? (y/n)");
             yesOrNo = scanner.nextLine().toLowerCase();
 
             if (yesOrNo.equals("y")) {
@@ -192,7 +218,7 @@ public class App {
         }
 
         while (true) {
-            System.out.println("Ska boendet erbjuda barnklubb? (y/n)");
+            System.out.println("Måste boendet erbjuda barnklubb? (y/n)");
             yesOrNo = scanner.nextLine().toLowerCase();
 
 
