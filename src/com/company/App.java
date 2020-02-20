@@ -8,7 +8,7 @@ import java.util.Scanner;
 public class App {
 
     Scanner scanner = new Scanner(System.in);
-    Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/holidaymaker", "root", "?");
+    Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/holidaymaker", "root", "ztc316yo");
 
     public App() throws SQLException {
     }
@@ -49,8 +49,9 @@ public class App {
     }
 
     public void registerCustomer() throws SQLException {
-        System.out.println("Ange kundens namn:");
+        System.out.println("Ange kundens namn (0 för att återgå till huvudmenyn):");
         String customerName = scanner.nextLine();
+        if (customerName.equals("0")) return;
         System.out.println("Ange kundens e-mail:");
         String customerEmail = scanner.nextLine();
         System.out.println("Ange kundens telefonnr:");
@@ -89,11 +90,9 @@ public class App {
         String entertainmentIsNecessary;
         String kidsClubIsNecessary;
 
-        // VÄLJA HOTELL SEDAN VÄLJA RUM, GÅ FRAM OCH TILLBAKA I MENYN, FIXA HUR BOKNINGAR PÅ DATUM/RUM SKA IMPLEMENTERAS
-
         ArrayList<Integer> kundIds = new ArrayList<>();
 
-        try{
+        try {
             Statement statement = conn.createStatement();
             ResultSet resultSet = statement.executeQuery("select * from kunder");
 
@@ -106,20 +105,20 @@ public class App {
                 System.out.println(row);
             }
 
-        }catch(Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
             return;
         }
 
-        while (true){
-            System.out.println("Ange kund-ID för bokningen eller 0 för att gå tillbaka: ");
+        while (true) {
+            System.out.println("\nAnge kund-ID för bokningen eller 0 för att gå tillbaka: ");
             try {
                 int selection = Integer.parseInt(scanner.nextLine());
                 if (selection == 0) return;
                 if (!kundIds.contains(selection)) throw new IndexOutOfBoundsException();
                 customerId = selection;
                 break;
-            } catch(Exception ex){
+            } catch (Exception ex) {
                 System.out.println("Vänligen ange ett giltigt kund-ID eller 0 för att gå tillbaka");
             }
         }
@@ -154,7 +153,7 @@ public class App {
             return;
         }
 
-        for (String date : allDates){
+        for (String date : allDates) {
             System.out.println(date);
         }
 
@@ -208,9 +207,9 @@ public class App {
 
         selectedDates.add(startDate);
 
-        for (int i = 0; i < datesAfterStartDate.length; i++){
+        for (int i = 0; i < datesAfterStartDate.length; i++) {
             selectedDates.add(datesAfterStartDate[i]);
-            if (datesAfterStartDate[i].equals(endDate)){
+            if (datesAfterStartDate[i].equals(endDate)) {
                 break;
             }
         }
@@ -330,7 +329,7 @@ public class App {
 
             String selection = scanner.nextLine();
 
-            switch (selection){
+            switch (selection) {
                 case "1":
                     mealCost = "none";
                     loop = false;
@@ -349,20 +348,21 @@ public class App {
         }
 
         String dateString = "";
-        for (String date : selectedDates){
+        for (String date : selectedDates) {
             dateString += " r." + date + " = true AND";
         }
 
         ArrayList<Integer> hotel_ids = new ArrayList<>();
+        ArrayList<SearchResult> sortedResults = new ArrayList<>();
 
         try {
             Statement statement = conn.createStatement();
             ResultSet resultSet = statement.executeQuery("SELECT b.boende_id, b.namn, b.pool, b.restaurang, b.kvällsunderhållning, b.barnklubb, b.avstånd_strand, b.avstånd_centrum, b.omdöme, r.pris, r.pris_halvpension, r.pris_helpension, r.pris_extrasäng " +
                     "FROM boende b JOIN rum_med_pris r ON b.boende_id = r.boende_id " +
-                    "WHERE" + dateString + poolIsNecessary + restaurantIsNecessary + entertainmentIsNecessary + kidsClubIsNecessary + " avstånd_strand < " + distanceToBeach + " AND avstånd_centrum < " + distanceToCenter +" AND r.antal_sängar = " + numberOfPeople +
+                    "WHERE" + dateString + poolIsNecessary + restaurantIsNecessary + entertainmentIsNecessary + kidsClubIsNecessary + " avstånd_strand < " + distanceToBeach + " AND avstånd_centrum < " + distanceToCenter + " AND r.antal_sängar = " + numberOfPeople +
                     " GROUP BY b.namn;");
 
-            if (!resultSet.next()){
+            if (!resultSet.next()) {
                 System.out.println("Vi kunde inte hitta några lediga rum med de angivna kriterierna!");
                 return;
             }
@@ -374,23 +374,36 @@ public class App {
                 int rooms = 0;
                 int price = resultSet.getInt("pris");
 
-                while(amountOfRooms.next()){
+                while (amountOfRooms.next()) {
                     rooms = amountOfRooms.getInt(1);
                 }
 
-                if (extraBed){
+                if (extraBed) {
                     price += resultSet.getInt("pris_extrasäng");
                 }
 
-                if (mealCost.equals("half")){
+                if (mealCost.equals("half")) {
                     price += resultSet.getInt("pris_halvpension");
-                } else if (mealCost.equals("whole")){
+                } else if (mealCost.equals("whole")) {
                     price += resultSet.getInt("pris_helpension");
                 }
+                int totalCost = price * (selectedDates.size() - 1);
 
-                hotel_ids.add(resultSet.getInt("boende_id"));
+                int boende_id = resultSet.getInt("boende_id");
+                String name = resultSet.getString("namn");
+                boolean pool = resultSet.getBoolean("pool");
+                boolean restaurant = resultSet.getBoolean("restaurang");
+                boolean entertainment = resultSet.getBoolean("kvällsunderhållning");
+                boolean kidsClub = resultSet.getBoolean("barnklubb");
+                float disBeach = resultSet.getFloat("avstånd_strand");
+                float disCenter = resultSet.getFloat("avstånd_centrum");
+                float reviewScore = resultSet.getFloat("omdöme");
 
-                String row = resultSet.getInt("boende_id") + ". Boende: " + resultSet.getString("namn")
+                hotel_ids.add(boende_id);
+
+                sortedResults.add(new SearchResult(boende_id, name, pool, restaurant, entertainment, kidsClub, disBeach, disCenter, reviewScore, numberOfPeople, rooms, price, totalCost));
+
+                /*String row = resultSet.getInt("boende_id") + ". Boende: " + resultSet.getString("namn")
                         + ", Pool: " + resultSet.getBoolean("pool")
                         + ", Restaurang: " + resultSet.getBoolean("restaurang")
                         + ", Kvällsunderhållning: " + resultSet.getBoolean("kvällsunderhållning")
@@ -399,62 +412,93 @@ public class App {
                         + ", Avstånd till centrum: " + resultSet.getFloat("avstånd_centrum")
                         + ", Omdöme: " + resultSet.getFloat("omdöme")
                         + ", Lediga rum för " + numberOfPeople + " personer: " + rooms
-                        + ", Pris per natt: " + price + "\n";
-                System.out.println(row);
+                        + ", Pris per natt: " + price
+                        + ", Totalkostnad: " + totalCost + "\n";
+                System.out.println(row);*/
             }
         } catch (Exception ex) {
             ex.printStackTrace();
             System.out.println("\nEtt fel inträffade!\n");
         }
 
-        int roomId = 0;
+        for (SearchResult searchResult : sortedResults) {
+            System.out.println(searchResult);
+        }
 
         while (true) {
-            System.out.println("\nBoka ett rum mellan " + startDate + " och " + endDate + " genom att ange siffran till vänster om boendet eller 0 för att avsluta sökningen");
-            try {
-                int selection = Integer.parseInt(scanner.nextLine());
-                if (selection == 0) return;
-                if (!hotel_ids.contains(selection)){
-                    throw new IndexOutOfBoundsException();
-                }
-                Statement statement = conn.createStatement();
-                ResultSet resultSet = statement.executeQuery("SELECT r.rum_id FROM rum r WHERE" + dateString + " r.antal_sängar = " + numberOfPeople + " AND r.boende_id = " + selection +";");
+            System.out.println("Ange ett val (1-3) eller 0 för att avsluta sökningen\n");
+            System.out.println("(1) Sortera efter pris");
+            System.out.println("(2) Sortera efter omdöme");
+            System.out.println("(3) Boka ett rum");
 
-                while (resultSet.next()){
-                    roomId = resultSet.getInt("rum_id");
+
+            String selection = scanner.nextLine();
+
+            switch (selection) {
+                case "1":
+                    Collections.sort(sortedResults, SearchResult.sortByPrice);
+                    for (SearchResult res : sortedResults) System.out.println(res);
                     break;
-                }
-                break;
-            } catch (Exception ex){
-                System.out.println("Vänligen ange ett giltigt val!");
+                case "2":
+                    Collections.sort(sortedResults, SearchResult.sortByReview);
+                    for (SearchResult res : sortedResults) System.out.println(res);
+                    break;
+                case "3":
+                    int roomId = 0;
+                    while (true) {
+                        System.out.println("\nBoka ett rum mellan " + startDate + " och " + endDate + " genom att ange siffran till vänster om boendet eller 0 för att avsluta sökningen");
+                        try {
+                            int selection2 = Integer.parseInt(scanner.nextLine());
+                            if (selection2 == 0) return;
+                            if (!hotel_ids.contains(selection2)) {
+                                throw new IndexOutOfBoundsException();
+                            }
+                            Statement statement = conn.createStatement();
+                            ResultSet resultSet = statement.executeQuery("SELECT r.rum_id FROM rum r WHERE" + dateString + " r.antal_sängar = " + numberOfPeople + " AND r.boende_id = " + selection2 + ";");
+
+                            while (resultSet.next()) {
+                                roomId = resultSet.getInt("rum_id");
+                                break;
+                            }
+                            break;
+                        } catch (Exception ex) {
+                            System.out.println("Vänligen ange ett giltigt val!");
+                        }
+                    }
+
+                    String takenDates = "";
+                    selectedDates.remove(endDate);
+                    for (int i = 0; i < selectedDates.size(); i++) {
+                        takenDates += " " + selectedDates.get(i) + " = false";
+                        if (i == selectedDates.size() - 1) break;
+                        takenDates += ",";
+                    }
+
+                    try {
+                        PreparedStatement statement = conn.prepareStatement("INSERT INTO bokning (kund_id, antal_personer, måltider, extra_säng, rum_id, start_datum, slut_datum) VALUES (?, ?, ?, ?, ?, ?, ?);");
+                        statement.setInt(1, customerId);
+                        statement.setInt(2, numberOfPeople);
+                        statement.setString(3, mealCost);
+                        statement.setBoolean(4, extraBed);
+                        statement.setInt(5, roomId);
+                        statement.setString(6, startDate);
+                        statement.setString(7, endDate);
+                        statement.executeUpdate();
+
+                        Statement statement2 = conn.createStatement();
+                        statement2.executeUpdate("UPDATE rum SET" + takenDates + " WHERE rum_id = " + roomId + ";");
+
+                        System.out.println("Bokningen är slutförd!");
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        System.out.println("Bokningen misslyckades!");
+                    }
+                    return;
+                case "0":
+                    return;
+                default:
+                    System.out.println("Vänligen ange ett giltigt val! (0-3)");
             }
-        }
-
-        String takenDates = "";
-        for (String date : selectedDates){
-            takenDates += " " + date + " = false";
-            if (date.equals(endDate)) break;
-            takenDates += " AND";
-        }
-
-        try{
-            PreparedStatement statement = conn.prepareStatement("INSERT INTO bokning (kund_id, antal_personer, måltider, extra_säng, rum_id, start_datum, slut_datum) VALUES (?, ?, ?, ?, ?, ?, ?);");
-            statement.setInt(1, customerId);
-            statement.setInt(2, numberOfPeople);
-            statement.setString(3, mealCost);
-            statement.setBoolean(4, extraBed);
-            statement.setInt(5, roomId);
-            statement.setString(6, startDate);
-            statement.setString(7, endDate);
-            statement.executeUpdate();
-
-            Statement statement2 = conn.createStatement();
-            statement2.executeUpdate("UPDATE rum SET" + takenDates + " WHERE rum_id = " + roomId + ";");
-
-            System.out.println("Bokningen är slutförd!");
-        } catch (Exception ex){
-            ex.printStackTrace();
-            System.out.println("Bokningen misslyckades!");
         }
     }
 
