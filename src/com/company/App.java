@@ -1,5 +1,6 @@
 package com.company;
 
+import javax.xml.transform.Result;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -8,7 +9,7 @@ import java.util.Scanner;
 public class App {
 
     Scanner scanner = new Scanner(System.in);
-    Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/holidaymaker", "root", "ztc316yo");
+    Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/holidaymaker", "root", "?");
 
     public App() throws SQLException {
     }
@@ -16,17 +17,14 @@ public class App {
     public void run() throws SQLException {
 
         do {
-            System.out.println("Välkommen till HolidayMaker!");
+            System.out.println("Välkommen till HolidayMaker!\n");
             System.out.println("Ange ett alternativ för att fortsätta: (0-3)");
             System.out.println("(1) Registrera ny kund");
             System.out.println("(2) Sök lediga rum");
-            System.out.println("(3) Avboka rum / bokningar");
+            System.out.println("(3) Avboka/ändra bokningar");
             System.out.println("\n(0) Avsluta programmet");
 
-            String selection;
-
-
-            selection = scanner.nextLine();
+            String selection = scanner.nextLine();
 
             switch (selection) {
                 case "1":
@@ -42,14 +40,14 @@ public class App {
                     System.exit(0);
                     break;
                 default:
-                    System.out.println("Vänligen välj ett alternativ mellan 0-3!");
+                    System.out.println("Vänligen välj ett giltigt alternativ! (0-3)");
                     break;
             }
         } while (true);
     }
 
     public void registerCustomer() throws SQLException {
-        System.out.println("Ange kundens namn (0 för att återgå till huvudmenyn):");
+        System.out.println("Ange kundens namn eller '0' för att återgå till huvudmenyn:");
         String customerName = scanner.nextLine();
         if (customerName.equals("0")) return;
         System.out.println("Ange kundens e-mail:");
@@ -111,7 +109,7 @@ public class App {
         }
 
         while (true) {
-            System.out.println("\nAnge kund-ID för bokningen eller 0 för att gå tillbaka: ");
+            System.out.println("\nAnge kund-ID för bokningen eller '0' för att gå tillbaka: ");
             try {
                 int selection = Integer.parseInt(scanner.nextLine());
                 if (selection == 0) return;
@@ -119,12 +117,12 @@ public class App {
                 customerId = selection;
                 break;
             } catch (Exception ex) {
-                System.out.println("Vänligen ange ett giltigt kund-ID eller 0 för att gå tillbaka");
+                System.out.println("Vänligen ange ett giltigt kund-ID eller '0' för att gå tillbaka");
             }
         }
 
         while (true) {
-            System.out.println("Ange antal personer för bokningen eller 0 för att gå tillbaka:");
+            System.out.println("Ange antal personer för bokningen eller '0' för att gå tillbaka:");
             try {
                 numberOfPeople = Integer.parseInt(scanner.nextLine());
                 if (numberOfPeople == 0) return;
@@ -402,19 +400,6 @@ public class App {
                 hotel_ids.add(boende_id);
 
                 sortedResults.add(new SearchResult(boende_id, name, pool, restaurant, entertainment, kidsClub, disBeach, disCenter, reviewScore, numberOfPeople, rooms, price, totalCost));
-
-                /*String row = resultSet.getInt("boende_id") + ". Boende: " + resultSet.getString("namn")
-                        + ", Pool: " + resultSet.getBoolean("pool")
-                        + ", Restaurang: " + resultSet.getBoolean("restaurang")
-                        + ", Kvällsunderhållning: " + resultSet.getBoolean("kvällsunderhållning")
-                        + ", Barnklubb: " + resultSet.getBoolean("barnklubb")
-                        + ", Avstånd till strand: " + resultSet.getFloat("avstånd_strand")
-                        + ", Avstånd till centrum: " + resultSet.getFloat("avstånd_centrum")
-                        + ", Omdöme: " + resultSet.getFloat("omdöme")
-                        + ", Lediga rum för " + numberOfPeople + " personer: " + rooms
-                        + ", Pris per natt: " + price
-                        + ", Totalkostnad: " + totalCost + "\n";
-                System.out.println(row);*/
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -426,7 +411,7 @@ public class App {
         }
 
         while (true) {
-            System.out.println("Ange ett val (1-3) eller 0 för att avsluta sökningen\n");
+            System.out.println("Ange ett val (1-3) eller '0' för att avsluta sökningen\n");
             System.out.println("(1) Sortera efter pris");
             System.out.println("(2) Sortera efter omdöme");
             System.out.println("(3) Boka ett rum");
@@ -504,5 +489,179 @@ public class App {
 
     public void cancelBookings(){
 
+        ArrayList<String> bookings = new ArrayList<>();
+        ArrayList<Integer> bookingIds = new ArrayList<>();
+        try{
+            Statement statement = conn.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM bokningar");
+
+            while (resultSet.next()){
+                String row = "Boknings-ID: " + resultSet.getInt("bokning_id")
+                        + ", Kund-ID: " + resultSet.getInt("kund_id")
+                        + ", Kundens Namn: " + resultSet.getString("namn")
+                        + ", Antal personer: " + resultSet.getInt("antal_personer")
+                        + ", Måltidsval: " + resultSet.getString("måltider")
+                        + ", Extrasäng: " + resultSet.getBoolean("extra_säng")
+                        + ", Rums-ID: " + resultSet.getInt("rum_id")
+                        + ", Startdatum: " + resultSet.getString("start_datum")
+                        + ", Slutdatum: " + resultSet.getString("slut_datum");
+                bookings.add(row);
+                bookingIds.add(resultSet.getInt("bokning_id"));
+            }
+        } catch(Exception ex){
+            ex.printStackTrace();
+            System.out.println("Något gick fel! Du returneras nu till huvudmenyn!");
+            return;
+        }
+
+        while (true) {
+            System.out.println("Ange ett alternativ (0-2)");
+            System.out.println("(1) Avboka en bokning");
+            System.out.println("(2) Ändra en bokning\n");
+            System.out.println("(0) Återgå till huvudmenyn");
+
+            String selection = scanner.nextLine();
+
+            switch (selection){
+                case "1":
+                    cancelBooking(bookings, bookingIds);
+                    return;
+                case "2":
+                    changeBooking(bookings, bookingIds);
+                    return;
+                case "0":
+                    return;
+                default:
+                    System.out.println("Vänligen ange ett giltigt alternativ (0-2)");
+            }
+        }
+    }
+
+    public void cancelBooking(ArrayList<String> bookings, ArrayList<Integer> bookingIds){
+        for (String booking : bookings) System.out.println(booking);
+
+        int selection;
+        while (true) {
+            System.out.println("\nAnge boknings-id för den bokning du vill avboka eller '0' för att gå tillbaka: ");
+            try {
+                selection = Integer.parseInt(scanner.nextLine());
+                if (selection == 0) return;
+                for (int id : bookingIds){
+                    if (selection == id){
+                        try {
+                            Statement statement = conn.createStatement();
+                            statement.executeUpdate("DELETE FROM bokning WHERE bokning_id = " + id + ";");
+                            System.out.println("Bokning nr " + id + " är nu avbokad!");
+                        } catch(Exception ex){
+                            ex.printStackTrace();
+                            System.out.println("Avbokningen misslyckades!");
+                        }
+                        break;
+                    }
+                }
+                break;
+            } catch (Exception ex) {
+                System.out.println("Vänligen ange ett giltigt boknings-id!");
+            }
+        }
+    }
+
+    public void changeBooking(ArrayList<String> bookings, ArrayList<Integer> bookingIds){
+        for (String booking : bookings) System.out.println(booking);
+
+        int selection;
+        String change = "";
+        while (true) {
+            System.out.println("\nAnge boknings-id för den bokning du vill ändra eller '0' för att gå tillbaka: ");
+            try {
+                selection = Integer.parseInt(scanner.nextLine());
+                if (selection == 0) return;
+                for (int id : bookingIds){
+                    if (selection == id){
+                        boolean menuBool1 = true;
+                        while (menuBool1) {
+                            System.out.println("Ange vilken del av bokningen kunden vill ändra eller '0' för att gå tillbaka: ");
+                            System.out.println("(1) Måltidsval");
+                            System.out.println("(2) Extrasäng");
+
+                            String choice = scanner.nextLine();
+                            switch (choice) {
+                                case "1":
+                                    boolean mealBool = true;
+                                    do {
+                                        System.out.println("Ange ett alternativ att ändra måltidsval till eller '0' för att gå tillbaka: ");
+                                        System.out.println("(1) Inget");
+                                        System.out.println("(2) Halvpension");
+                                        System.out.println("(3) Helpension");
+
+                                        String select = scanner.nextLine();
+
+                                        switch (select) {
+                                            case "1":
+                                                change = "none";
+                                                break;
+                                            case "2":
+                                                change = "half";
+                                                break;
+                                            case "3":
+                                                change = "whole";
+                                                break;
+                                            case "0":
+                                                break;
+                                            default:
+                                                System.out.println("Vänligen ange ett giltigt alternativ! (0-3)");
+                                        }
+                                        if (!change.equals("")) mealBool = false;
+                                    } while (mealBool);
+
+                                    try {
+                                        Statement statement = conn.createStatement();
+                                        statement.executeUpdate("UPDATE bokning SET måltider = '" + change + "' WHERE bokning_id = " + id + ";");
+                                        System.out.println("Bokningen är nu ändrad!");
+                                    } catch (Exception ex) {
+                                        ex.printStackTrace();
+                                        System.out.println("Ändringen misslyckades!");
+                                    }
+                                    menuBool1 = false;
+                                    break;
+                                case "2":
+                                    boolean extraBed = true;
+                                    while (true) {
+                                        System.out.println("Vill kunden ha en extrasäng? (y/n)");
+                                        String yOrN = scanner.nextLine().toLowerCase();
+
+                                        if (yOrN.equals("n")) {
+                                            extraBed = false;
+                                            break;
+                                        } else if (yOrN.equals("y")) {
+                                            break;
+                                        } else System.out.println("Vänligen ange ett giltigt alternativ! (y/n)");
+                                    }
+                                    try {
+                                        Statement statement = conn.createStatement();
+                                        statement.executeUpdate("UPDATE bokning SET extra_säng = " + extraBed + " WHERE bokning_id = " + id + ";");
+                                        System.out.println("Bokningen har nu ändrats!\n");
+                                        break;
+                                    } catch (Exception ex) {
+                                        ex.printStackTrace();
+                                        System.out.println("Ändringen misslyckades!\n");
+                                    }
+                                    menuBool1 = false;
+                                    break;
+                                case "0":
+                                    menuBool1 = false;
+                                    break;
+                                default:
+                                    System.out.println("Vänligen ange ett giltigt alternativ! (0-2)");
+                            }
+                        }
+                        break;
+                    }
+                }
+                break;
+            } catch (Exception ex) {
+                System.out.println("Vänligen ange ett giltigt boknings-id!");
+            }
+        }
     }
 }

@@ -58,7 +58,7 @@ public class SearchResult {
         } else return 0;
     };
 
-    public String toString(){
+    public String toString() {
         return hotel_id + ". Boende: " + name
                 + ", Pool: " + pool
                 + ", Restaurang: " + restaurant
