@@ -221,7 +221,7 @@ public class App {
             } else if (yesOrNo.equals("n")) {
                 poolIsNecessary = "";
                 break;
-            }
+            } else System.out.println("Vänligen ange ett giltigt alternativ! (y/n)");
         }
 
         while (true) {
@@ -234,7 +234,7 @@ public class App {
             } else if (yesOrNo.equals("n")) {
                 restaurantIsNecessary = "";
                 break;
-            }
+            } else System.out.println("Vänligen ange ett giltigt alternativ! (y/n)");
         }
 
         while (true) {
@@ -247,7 +247,7 @@ public class App {
             } else if (yesOrNo.equals("n")) {
                 entertainmentIsNecessary = "";
                 break;
-            }
+            } else System.out.println("Vänligen ange ett giltigt alternativ! (y/n)");
         }
 
         while (true) {
@@ -260,7 +260,7 @@ public class App {
             } else if (yesOrNo.equals("n")) {
                 kidsClubIsNecessary = "";
                 break;
-            }
+            } else System.out.println("Vänligen ange ett giltigt alternativ! (y/n)");
         }
 
         while (true) {
@@ -281,7 +281,7 @@ public class App {
             } else if (yesOrNo.equals("n")) {
                 distanceToBeach = 999.0f;
                 break;
-            } else System.out.println("\nVänligen ange 'y' eller 'n'!\n");
+            } else System.out.println("Vänligen ange ett giltigt alternativ! (y/n)");
         }
 
         while (true) {
@@ -302,7 +302,7 @@ public class App {
             } else if (yesOrNo.equals("n")) {
                 distanceToCenter = 999.0f;
                 break;
-            } else System.out.println("\nVänligen ange 'y' eller 'n'!\n");
+            } else System.out.println("Vänligen ange ett giltigt alternativ! (y/n)");
         }
 
         while (true) {
@@ -314,7 +314,7 @@ public class App {
             } else if (yesOrNo.equals("n")) {
                 extraBed = false;
                 break;
-            } else System.out.println("\nVänligen ange 'y' eller 'n'!\n");
+            } else System.out.println("Vänligen ange ett giltigt alternativ! (y/n)");
         }
 
         boolean loop = true;
@@ -447,7 +447,7 @@ public class App {
                             }
                             break;
                         } catch (Exception ex) {
-                            System.out.println("Vänligen ange ett giltigt val!");
+                            System.out.println("Vänligen ange ett giltigt alternativ!\n");
                         }
                     }
 
@@ -473,16 +473,16 @@ public class App {
                         Statement statement2 = conn.createStatement();
                         statement2.executeUpdate("UPDATE rum SET" + takenDates + " WHERE rum_id = " + roomId + ";");
 
-                        System.out.println("Bokningen är slutförd!");
+                        System.out.println("Bokningen är slutförd!\n");
                     } catch (Exception ex) {
                         ex.printStackTrace();
-                        System.out.println("Bokningen misslyckades!");
+                        System.out.println("Bokningen misslyckades!\n");
                     }
                     return;
                 case "0":
                     return;
                 default:
-                    System.out.println("Vänligen ange ett giltigt val! (0-3)");
+                    System.out.println("Vänligen ange ett giltigt alternativ! (0-3)\n");
             }
         }
     }
@@ -510,12 +510,12 @@ public class App {
             }
         } catch(Exception ex){
             ex.printStackTrace();
-            System.out.println("Något gick fel! Du returneras nu till huvudmenyn!");
+            System.out.println("Något gick fel! Du returneras nu till huvudmenyn!\n");
             return;
         }
 
         while (true) {
-            System.out.println("Ange ett alternativ (0-2)");
+            System.out.println("Ange ett alternativ (0-2):");
             System.out.println("(1) Avboka en bokning");
             System.out.println("(2) Ändra en bokning\n");
             System.out.println("(0) Återgå till huvudmenyn");
@@ -532,7 +532,7 @@ public class App {
                 case "0":
                     return;
                 default:
-                    System.out.println("Vänligen ange ett giltigt alternativ (0-2)");
+                    System.out.println("Vänligen ange ett giltigt alternativ! (0-2)\n");
             }
         }
     }
@@ -542,26 +542,27 @@ public class App {
 
         int selection;
         while (true) {
-            System.out.println("\nAnge boknings-id för den bokning du vill avboka eller '0' för att gå tillbaka: ");
+            System.out.println("Ange boknings-id för den bokning du vill avboka eller '0' för att gå tillbaka: ");
             try {
                 selection = Integer.parseInt(scanner.nextLine());
                 if (selection == 0) return;
+                if (!bookingIds.contains(selection)) throw new IndexOutOfBoundsException();
                 for (int id : bookingIds){
                     if (selection == id){
                         try {
                             Statement statement = conn.createStatement();
                             statement.executeUpdate("DELETE FROM bokning WHERE bokning_id = " + id + ";");
-                            System.out.println("Bokning nr " + id + " är nu avbokad!");
+                            System.out.println("Bokning nr " + id + " är nu avbokad!\n");
                         } catch(Exception ex){
                             ex.printStackTrace();
-                            System.out.println("Avbokningen misslyckades!");
+                            System.out.println("Avbokningen misslyckades!\n");
                         }
                         break;
                     }
                 }
                 break;
             } catch (Exception ex) {
-                System.out.println("Vänligen ange ett giltigt boknings-id!");
+                System.out.println("Vänligen ange ett giltigt boknings-id!\n");
             }
         }
     }
@@ -572,10 +573,11 @@ public class App {
         int selection;
         String change = "";
         while (true) {
-            System.out.println("\nAnge boknings-id för den bokning du vill ändra eller '0' för att gå tillbaka: ");
+            System.out.println("Ange boknings-id för den bokning du vill ändra eller '0' för att gå tillbaka: ");
             try {
                 selection = Integer.parseInt(scanner.nextLine());
                 if (selection == 0) return;
+                if (!bookingIds.contains(selection)) throw new IndexOutOfBoundsException();
                 for (int id : bookingIds){
                     if (selection == id){
                         boolean menuBool1 = true;
@@ -609,7 +611,7 @@ public class App {
                                             case "0":
                                                 break;
                                             default:
-                                                System.out.println("Vänligen ange ett giltigt alternativ! (0-3)");
+                                                System.out.println("Vänligen ange ett giltigt alternativ! (0-3)\n");
                                         }
                                         if (!change.equals("")) mealBool = false;
                                     } while (mealBool);
@@ -617,10 +619,10 @@ public class App {
                                     try {
                                         Statement statement = conn.createStatement();
                                         statement.executeUpdate("UPDATE bokning SET måltider = '" + change + "' WHERE bokning_id = " + id + ";");
-                                        System.out.println("Bokningen är nu ändrad!");
+                                        System.out.println("Bokningen har nu ändrats!\n");
                                     } catch (Exception ex) {
                                         ex.printStackTrace();
-                                        System.out.println("Ändringen misslyckades!");
+                                        System.out.println("Ändringen misslyckades!\n");
                                     }
                                     menuBool1 = false;
                                     break;
@@ -635,7 +637,7 @@ public class App {
                                             break;
                                         } else if (yOrN.equals("y")) {
                                             break;
-                                        } else System.out.println("Vänligen ange ett giltigt alternativ! (y/n)");
+                                        } else System.out.println("Vänligen ange ett giltigt alternativ! (y/n)\n");
                                     }
                                     try {
                                         Statement statement = conn.createStatement();
@@ -652,7 +654,7 @@ public class App {
                                     menuBool1 = false;
                                     break;
                                 default:
-                                    System.out.println("Vänligen ange ett giltigt alternativ! (0-2)");
+                                    System.out.println("Vänligen ange ett giltigt alternativ! (0-2)\n");
                             }
                         }
                         break;
@@ -660,7 +662,7 @@ public class App {
                 }
                 break;
             } catch (Exception ex) {
-                System.out.println("Vänligen ange ett giltigt boknings-id!");
+                System.out.println("Vänligen ange ett giltigt boknings-id!\n");
             }
         }
     }
