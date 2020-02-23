@@ -140,26 +140,6 @@ public class App {
             }
         }
 
-        /*try {
-            Statement statement = conn.createStatement();
-            ResultSet rs = statement.executeQuery("SELECT * FROM rum WHERE rum_id = 1;");
-            ResultSetMetaData rsmd = rs.getMetaData();
-
-            allDates = new String[rsmd.getColumnCount() - 4];
-
-            for (int i = 0; i < allDates.length; i++) {
-                allDates[i] = rsmd.getColumnLabel(i + 5);
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            System.out.println("Ett fel har inträffat, du returneras till huvudmenyn.");
-            return;
-        }
-
-        for (String date : allDates) {
-            System.out.println(date);
-        }*/
-
         while (true) {
             System.out.println("Ange startdatum för vistelsen: (ex. '2020-06-23')");
             try {
@@ -196,7 +176,7 @@ public class App {
             System.out.println("Måste boendet erbjuda swimmingpool? (y/n)");
             yesOrNo = scanner.nextLine().toLowerCase();
             if (yesOrNo.equals("y")) {
-                poolIsNecessary = " pool = 1 AND";
+                poolIsNecessary = "pool = 1 AND ";
                 break;
             } else if (yesOrNo.equals("n")) {
                 poolIsNecessary = "";
@@ -209,7 +189,7 @@ public class App {
             yesOrNo = scanner.nextLine().toLowerCase();
 
             if (yesOrNo.equals("y")) {
-                restaurantIsNecessary = " restaurang = 1 AND";
+                restaurantIsNecessary = "restaurang = 1 AND ";
                 break;
             } else if (yesOrNo.equals("n")) {
                 restaurantIsNecessary = "";
@@ -222,7 +202,7 @@ public class App {
             yesOrNo = scanner.nextLine().toLowerCase();
 
             if (yesOrNo.equals("y")) {
-                entertainmentIsNecessary = " kvällsunderhållning = 1 AND";
+                entertainmentIsNecessary = "kvällsunderhållning = 1 AND ";
                 break;
             } else if (yesOrNo.equals("n")) {
                 entertainmentIsNecessary = "";
@@ -235,7 +215,7 @@ public class App {
             yesOrNo = scanner.nextLine().toLowerCase();
 
             if (yesOrNo.equals("y")) {
-                kidsClubIsNecessary = " barnklubb = 1 AND";
+                kidsClubIsNecessary = "barnklubb = 1 AND ";
                 break;
             } else if (yesOrNo.equals("n")) {
                 kidsClubIsNecessary = "";
@@ -335,7 +315,7 @@ public class App {
             Statement statement = conn.createStatement();
             ResultSet resultSet = statement.executeQuery("SELECT b.boende_id, b.namn, b.pool, b.restaurang, b.kvällsunderhållning, b.barnklubb, b.avstånd_strand, b.avstånd_centrum, b.omdöme, r.pris, r.pris_halvpension, r.pris_helpension, r.pris_extrasäng, r.checkin, r.checkout " +
                     "FROM boende b LEFT JOIN rum_pris_bokningar r ON b.boende_id = r.boende_id " +
-                    "WHERE" + poolIsNecessary + restaurantIsNecessary + entertainmentIsNecessary + kidsClubIsNecessary + " avstånd_strand < " + distanceToBeach + " AND avstånd_centrum < " + distanceToCenter + " AND r.antal_sängar = " + numberOfPeople + " AND r.checkin is null OR ('" + startDate2 + "' < r.checkin" + " OR '" + startDate2 + "' > r.checkout)" + " AND ('" + endDate2 + "' < r.checkin OR '" + endDate2 + "' > r.checkout)" +
+                    "WHERE (" + poolIsNecessary + restaurantIsNecessary + entertainmentIsNecessary + kidsClubIsNecessary + "avstånd_strand < " + distanceToBeach + " AND avstånd_centrum < " + distanceToCenter + " AND r.antal_sängar = " + numberOfPeople + ") AND (r.checkin is null OR ('" + startDate2 + "' < r.checkin" + " OR '" + startDate2 + "' > r.checkout)" + " AND ('" + endDate2 + "' < r.checkin OR '" + endDate2 + "' > r.checkout))" +
                     " GROUP BY b.namn;");
 
             if (!resultSet.next()) {
@@ -346,7 +326,7 @@ public class App {
 
             while (resultSet.next()) {
                 Statement anotherStatement = conn.createStatement();
-                ResultSet amountOfRooms = anotherStatement.executeQuery("SELECT COUNT(r.rum_id) FROM rum_pris_bokningar r WHERE r.boende_id = " + resultSet.getInt("boende_id") + " AND r.antal_sängar = " + numberOfPeople + " AND r.checkin is null OR ('" + startDate2 + "' < r.checkin" + " OR '" + startDate2 + "' > r.checkout)" + " AND ('" + endDate2 + "' < r.checkin OR '" + endDate2 + "' > r.checkout);");
+                ResultSet amountOfRooms = anotherStatement.executeQuery("SELECT COUNT(r.rum_id) FROM rum_pris_bokningar r WHERE (r.boende_id = " + resultSet.getInt("boende_id") + " AND r.antal_sängar = " + numberOfPeople + ") AND (r.checkin is null OR ('" + startDate2 + "' < r.checkin" + " OR '" + startDate2 + "' > r.checkout)" + " AND ('" + endDate2 + "' < r.checkin OR '" + endDate2 + "' > r.checkout));");
                 int rooms = 0;
                 int price = resultSet.getInt("pris");
 
@@ -418,7 +398,7 @@ public class App {
                                 throw new IndexOutOfBoundsException();
                             }
                             Statement statement = conn.createStatement();
-                            ResultSet resultSet = statement.executeQuery("SELECT r.rum_id FROM rum_pris_bokningar r WHERE r.antal_sängar = " + numberOfPeople + " AND r.boende_id = " + selection2 + " AND r.checkin is null OR ('" + startDate2 + "' < r.checkin" + " OR '" + startDate2 + "' > r.checkout)" + " AND ('" + endDate2 + "' < r.checkin OR '" + endDate2 + "' > r.checkout);");
+                            ResultSet resultSet = statement.executeQuery("SELECT r.rum_id FROM rum_pris_bokningar r WHERE (r.antal_sängar = " + numberOfPeople + " AND r.boende_id = " + selection2 + ") AND (r.checkin is null OR ('" + startDate2 + "' < r.checkin" + " OR '" + startDate2 + "' > r.checkout)" + " AND ('" + endDate2 + "' < r.checkin OR '" + endDate2 + "' > r.checkout));");
 
                             while (resultSet.next()) {
                                 roomId = resultSet.getInt("rum_id");
