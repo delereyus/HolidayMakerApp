@@ -16,9 +16,9 @@ public class SearchResult {
     private int numberOfPeople;
     private int rooms;
     private int pricePerNight;
-    private int totalCost;
+    private long totalCost;
 
-    public SearchResult(int hotel_id, String name, boolean pool, boolean restaurant, boolean entertainment, boolean kidsClub, float distanceToBeach, float distanceToCenter, float reviewScore, int numberOfPeople, int rooms, int pricePerNight, int totalCost) {
+    public SearchResult(int hotel_id, String name, boolean pool, boolean restaurant, boolean entertainment, boolean kidsClub, float distanceToBeach, float distanceToCenter, float reviewScore, int numberOfPeople, int rooms, int pricePerNight, long totalCost) {
         this.hotel_id = hotel_id;
         this.name = name;
         this.pool = pool;
